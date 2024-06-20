@@ -8,7 +8,8 @@ extern int yylex(void);
 %}
 %union{
 	string * name;
-	Node_Attribute * node_attribute;
+	Ast *ast;
+	list<Ast *> *ast_list;	
 }
 %token <name> NUM 
 %token <name> ID
@@ -16,13 +17,13 @@ extern int yylex(void);
 %left '+' '-'
 %left '*' '/'
 %right Uminus
-%type <node_attribute> Expr
-%type <node_attribute> Stmt
-%type <node_attribute> StmtList
+%type <ast> Expr
+%type <ast> Stmt
+%type <ast_list> StmtList
 %start Start
 %%
 Start: StmtList 			{	if (show_parse()) cout << "Reducing by `Start: StmtList'\n";
-						if (semantic_analysis()) process_finish($1); 
+						//if (semantic_analysis()) process_finish($1); 
 					}
 	;
 StmtList : StmtList Stmt		{ 

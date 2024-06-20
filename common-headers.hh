@@ -9,7 +9,6 @@
 # include <assert.h>
 #include <stdexcept>
 # include "ast.hh"
-# include "node-attributes.hh"
 
 using namespace std;
 
@@ -24,9 +23,8 @@ struct Options {
 };
 
 typedef enum {
-		compiler,
-		interpreter
-	} lpmode;
+	compiler,
+} lpmode;
 
 typedef enum {
 	PLUS,
@@ -35,19 +33,18 @@ typedef enum {
 	DIV,
 	UMINUS,
 	COPY,
-	} op_type;
+} op_type;
 
 extern struct argp_option options[]; 
 extern lpmode mode;
 
 
-Node_Attribute * process_ID(string * name);
-Node_Attribute * process_NUM(string * name);
-Node_Attribute * process_Expr(Node_Attribute *left, op_type op, Node_Attribute *right);
-Node_Attribute * process_Asgn(string *lhs_name, Node_Attribute *rhs);
-Node_Attribute * process_Stmt_List(Node_Attribute * na_list, Node_Attribute * na_ast);
-Node_Attribute * init_Stmt_List(Node_Attribute * na_ast);
-void process_finish(Node_Attribute *attr);
+Ast * process_ID(string * name);
+Ast * process_NUM(string * name);
+Ast * process_Expr(Ast *left, op_type op, Ast *right);
+Ast * process_Asgn(string *lhs_name, Ast *rhs);
+list<Ast *> * process_Stmt_List(list<Ast *> * ast_list, Ast *ast);
+list<Ast *> * init_Stmt_List(Ast *ast);
 int parse_opt (int key, char *arg, struct argp_state *state);
 
 bool show_tokens();

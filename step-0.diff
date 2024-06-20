@@ -1,0 +1,522 @@
+diff --git a/Makefile b/Makefile
+index e640b31..08fa174 100644
+--- a/Makefile
++++ b/Makefile
+@@ -7,7 +7,7 @@ TGT = coi
+ SCAN = $(TGT).l
+ PARSE = $(TGT).y
+ 
+-OBJ = scan.o parse.tab.o main.o support.o ast.o options.o node-attributes.o
++OBJ = scan.o parse.tab.o main.o support.o ast.o options.o
+ 
+ CFLAGS = -g -fpermissive
+ 
+diff --git a/coi.y b/coi.y
+index a6e2306..c79a6bc 100644
+--- a/coi.y
++++ b/coi.y
+@@ -8,7 +8,8 @@ extern int yylex(void);
+ %}
+ %union{
+ 	string * name;
+-	Node_Attribute * node_attribute;
++	Ast *ast;
++	list<Ast *> *ast_list;	
+ }
+ %token <name> NUM 
+ %token <name> ID
+@@ -16,13 +17,13 @@ extern int yylex(void);
+ %left '+' '-'
+ %left '*' '/'
+ %right Uminus
+-%type <node_attribute> Expr
+-%type <node_attribute> Stmt
+-%type <node_attribute> StmtList
++%type <ast> Expr
++%type <ast> Stmt
++%type <ast_list> StmtList
+ %start Start
+ %%
+ Start: StmtList 			{	if (show_parse()) cout << "Reducing by `Start: StmtList'\n";
+-						if (semantic_analysis()) process_finish($1); 
++						//if (semantic_analysis()) process_finish($1); 
+ 					}
+ 	;
+ StmtList : StmtList Stmt		{ 
+diff --git a/common-headers.hh b/common-headers.hh
+index 75bd3ca..7616c50 100644
+--- a/common-headers.hh
++++ b/common-headers.hh
+@@ -9,7 +9,6 @@
+ # include <assert.h>
+ #include <stdexcept>
+ # include "ast.hh"
+-# include "node-attributes.hh"
+ 
+ using namespace std;
+ 
+@@ -24,9 +23,8 @@ struct Options {
+ };
+ 
+ typedef enum {
+-		compiler,
+-		interpreter
+-	} lpmode;
++	compiler,
++} lpmode;
+ 
+ typedef enum {
+ 	PLUS,
+@@ -35,19 +33,18 @@ typedef enum {
+ 	DIV,
+ 	UMINUS,
+ 	COPY,
+-	} op_type;
++} op_type;
+ 
+ extern struct argp_option options[]; 
+ extern lpmode mode;
+ 
+ 
+-Node_Attribute * process_ID(string * name);
+-Node_Attribute * process_NUM(string * name);
+-Node_Attribute * process_Expr(Node_Attribute *left, op_type op, Node_Attribute *right);
+-Node_Attribute * process_Asgn(string *lhs_name, Node_Attribute *rhs);
+-Node_Attribute * process_Stmt_List(Node_Attribute * na_list, Node_Attribute * na_ast);
+-Node_Attribute * init_Stmt_List(Node_Attribute * na_ast);
+-void process_finish(Node_Attribute *attr);
++Ast * process_ID(string * name);
++Ast * process_NUM(string * name);
++Ast * process_Expr(Ast *left, op_type op, Ast *right);
++Ast * process_Asgn(string *lhs_name, Ast *rhs);
++list<Ast *> * process_Stmt_List(list<Ast *> * ast_list, Ast *ast);
++list<Ast *> * init_Stmt_List(Ast *ast);
+ int parse_opt (int key, char *arg, struct argp_state *state);
+ 
+ bool show_tokens();
+diff --git a/node-attributes.cc b/node-attributes.cc
+deleted file mode 100644
+index 96beb35..0000000
+--- a/node-attributes.cc
++++ /dev/null
+@@ -1,58 +0,0 @@
+-# include "common-headers.hh"
+-
+-using namespace std;
+-
+-
+-Node_Attribute::Node_Attribute(int v)  
+-{ 
+-	value=v;  
+-	ast = NULL; 
+-	ast_list = NULL;
+-}
+-
+-Node_Attribute::Node_Attribute(Ast *a) 
+-{ 
+-	value=0; 
+-	ast=a; 
+-	ast_list = NULL;
+-}
+-
+-Node_Attribute::Node_Attribute(list <Ast *> *l) 
+-{ 
+-	value=0; 
+-	ast=NULL; 
+-	ast_list = l;
+-}
+-
+-int Node_Attribute::get_value() 	
+-{ 
+-	return value; 
+-}
+-
+-Ast * Node_Attribute::get_ast()		
+-{ 	
+-	assert (ast!=NULL && "Attempt to extract NULL AST from a Node Attribute") ; 
+- 	return ast; 
+-}
+-
+-list <Ast*> * Node_Attribute::get_ast_list()		
+-{ 	
+-	assert (ast_list!=NULL && "Attempt to extract NULL AST List from a Node Attribute") ; 
+-	return ast_list; 
+-}
+-
+-void Node_Attribute::append_ast(Ast *a) 
+-{ 
+-	assert (a!=NULL && "Attempt to append NULL AST") ; 
+-	ast_list->push_back(a);
+-}
+-
+-list <Ast*> * Node_Attribute::init_ast_list(Ast * a)	
+-{ 
+-	assert (a!=NULL && "Attempt to create list with NULL AST") ; 
+-
+-	list <Ast*> *l = new list <Ast*>; 
+-	return l;
+-}
+-	
+-
+diff --git a/node-attributes.hh b/node-attributes.hh
+deleted file mode 100644
+index 10be623..0000000
+--- a/node-attributes.hh
++++ /dev/null
+@@ -1,27 +0,0 @@
+-#include "ast.hh"
+-
+-using namespace std;
+-
+-
+-// This class stores the attributes of the nodes creted during parsing.
+-class Node_Attribute 	
+-{	
+-	int value;		// Relevant only for interpretation
+-	Ast * ast;      	// Relevant only for compilation
+-	list <Ast *> *ast_list;	// Relevant only for compilation
+-
+-   public:
+-	Node_Attribute() { }
+-	Node_Attribute(int v);
+-	Node_Attribute(Ast *a);
+-	Node_Attribute(list <Ast *> *l);
+-	~Node_Attribute();
+-
+-	int get_value();
+-	Ast * get_ast();
+-	list <Ast*> * get_ast_list();
+-	void append_ast(Ast *a);
+-	list <Ast*> * init_ast_list(Ast * a);
+-	
+-};
+-
+diff --git a/options.cc b/options.cc
+index 34186f3..039692d 100644
+--- a/options.cc
++++ b/options.cc
+@@ -3,7 +3,6 @@
+ struct Options chosen_options;
+ 
+ struct argp_option options[] = {
+-		{ "interpret", 'i', 0, 0, "Interpret the input and print result"},
+ 		{ "compile", 'c', 0, 0, "Compile the input into abstract syntax trees"},
+   		{ "sa-scan", 'n' , 0, 0, "Stop after lexical analysis"},
+   		{ "sa-parse", 'e' , 0, 0, "Stop after parsing"},
+@@ -18,21 +17,7 @@ int parse_opt (int key, char *arg, struct argp_state *state)
+ {
+ 	switch (key)
+ 	{
+-		case 'i': 
+-			if (chosen_options.compile)
+-			{
+-				cerr << "coi: Compilation and interpretation are mutually exclusive" << endl;
+-				exit(1);
+-			}
+-			chosen_options.interpret = true;
+-			mode = interpreter;
+-			break;
+ 		case 'c': 
+-			if (chosen_options.interpret)
+-			{
+-				cerr << "coi: Compilation and interpretation are mutually exclusive" << endl;
+-				exit(1);
+-			}
+ 			chosen_options.compile = true;
+ 			mode = compiler;
+ 			break;
+@@ -75,14 +60,6 @@ bool show_parse()
+ 
+ bool show_ast()
+ {
+-	if (chosen_options.show_ast)
+-	{
+-		if (chosen_options.interpret)
+-		{
+-			cerr << "coi: The show AST option is incompatible with the interpret option" << endl;
+-			exit(1);
+-		}
+-	}
+ 	return chosen_options.show_ast;
+ }
+ 
+@@ -98,13 +75,7 @@ bool stop_after_parsing()
+ 
+ lpmode lp_mode()
+ {
+-	if (chosen_options.interpret)
+-	{
+-		return interpreter;
+-	}
+-	if (chosen_options.compile)
+-		return compiler;
+-	assert ("Unknown option which is neither interpretation nor compilation");
++	return compiler;	
+ }
+ 
+ bool semantic_analysis()
+diff --git a/support.cc b/support.cc
+index 0ced253..61e190b 100644
+--- a/support.cc
++++ b/support.cc
+@@ -5,192 +5,103 @@ map <string, int> memory; // Stores values of variables during interpretation
+ 
+ //////////////////////// PROCESSING REDUCTIONS /////////////////////////////////
+ 
+-Node_Attribute * process_NUM(string * name)
++Ast * process_NUM(string * name)
+ {
+-	Node_Attribute * na;
+-
+ 	int num;
+ 
+-	try    {
+-		num = stoi(*name);
+-		} 
+-		catch (const std::out_of_range& ex) 
+-		{
+-        		std::cerr << "Number too large: " << name << ex.what() << std::endl;
+-			exit(1);
+-		}
++	try
++	{
++	  num = stoi(*name);
++	} 
++	catch (const std::out_of_range& ex)
++	{
++	  std::cerr << "Number too large: " << name << ex.what() << std::endl;
++	  exit(1);
++	}
+ 
+ 	Ast * ast = new Number_Expr_Ast<int>(num);
+-
+-	if (lp_mode() == interpreter)
+-		na = new Node_Attribute(num);
+-	else if (lp_mode() == compiler)
+-		na = new Node_Attribute(ast);
+-	return na;
++	assert (ast != NULL);
++	return ast;	
+ }
+ 
+-Node_Attribute * process_ID(string * name)
++Ast * process_ID(string * name)
+ {
+-	Node_Attribute * na;
+-
+ 	Ast * ast = new Name_Expr_Ast(*name);
+-
+-	if (lp_mode() == interpreter)
+-		na = new Node_Attribute(memory[*name]);
+-	else if (lp_mode() == compiler)
+-		na = new Node_Attribute(ast);
+-	return na;
++	assert (ast != NULL);
++	return ast;	
+ }
+ 
+-Node_Attribute * process_Expr(Node_Attribute *left, op_type op, Node_Attribute *right)
++Ast * process_Expr(Ast *left, op_type op, Ast *right)
+ {
+-	Node_Attribute * na;
+ 	int result;
++	Ast * ast;
+ 
+-	if (lp_mode() == interpreter)
+-	{
+-		switch (op)
+-		{
+-			case PLUS: 	result = left->get_value() + right->get_value(); break;
+-			case MINUS:	result = left->get_value() - right->get_value(); break;
+-			case MULT:	result = left->get_value() * right->get_value(); break;
+-			case DIV:	
+-					{	int divisor = right->get_value(); 
+-						if (divisor != 0)
+-							result = left->get_value() / divisor; 
+-						else
+-						{
+-							cerr << "Divisor cannot be zero" << endl;
+-							exit(1);
+-						}
+-						break;
+-					}
+-			case UMINUS:
+-				if (right != NULL)
+-				{
+-					cerr << "Right operand must be NULL for Unary Minus" << endl;
+-					exit(1);
+-				}
+-				else	result =  - left->get_value();
+-				break;
+-			default:
+-				cerr << "Wrong operator type" << endl;
+-				exit(1);
+-				break;
+-		}
+-		na = new Node_Attribute(result);
+-	}
+-	else if (lp_mode() == compiler)
++	switch (op)
+ 	{
+-		Ast * ast;
+-
+-		switch (op)
+-		{
+-			case PLUS: 	ast = new Plus_Expr_Ast(left->get_ast(), right->get_ast()); break;
+-			case MINUS:	ast = new Minus_Expr_Ast(left->get_ast(), right->get_ast()); break;
+-			case MULT:	ast = new Mult_Expr_Ast(left->get_ast(), right->get_ast()); break;
+-			case DIV:	ast = new Div_Expr_Ast(left->get_ast(), right->get_ast()); break;
+-			case UMINUS:
+-				if (right != NULL)
+-				{
+-					exit(1);
+-				}
+-				else	ast = new UMinus_Expr_Ast(left->get_ast());
+-				break;
+-			default:
+-				cerr << "Wrong operator type" << endl;
++		case PLUS:	ast = new Plus_Expr_Ast(left, right); break;
++		case MINUS:	ast = new Minus_Expr_Ast(left, right); break;
++		case MULT:	ast = new Mult_Expr_Ast(left, right); break;
++		case DIV:	ast = new Div_Expr_Ast(left, right); break;
++		case UMINUS:
++			if (right != NULL)
++			{
+ 				exit(1);
+-				break;
+-		}
+-
+-		// Generating the current node's Node_Attribute using the above elements
+-		na = new Node_Attribute(ast);
++			}
++			else	ast = new UMinus_Expr_Ast(left);
++			break;
++		default:
++			cerr << "Wrong operator type" << endl;
++			exit(1);
++			break;
+ 	}
+-	return na;
++	return ast; 
+ }
+ 
+-Node_Attribute * process_Asgn(string *lhs_name, Node_Attribute *rhs)
++Ast * process_Asgn(string *lhs_name, Ast *rhs)
+ {
+ 	Ast *ast;
+-	Node_Attribute *attr;
+-
+-	if (lp_mode() == interpreter)
++	if (lhs_name == NULL)
+ 	{
+-		if (lhs_name == NULL)
+-		   	cout << "> " << rhs->get_value() << endl;
+-		else
+-		{
+-			memory[*lhs_name] = rhs->get_value();
+-			cout << "> " << *lhs_name << " = " << rhs->get_value() << endl;
+-		}
+-		attr = new Node_Attribute();
++		ast = rhs;
+ 	}
+-	else if (lp_mode() == compiler)
++	else
+ 	{
+-		if (lhs_name == NULL)
+-		{
+-			ast = rhs->get_ast();
+-		}
+-		else
+-		{
+-			Ast * l = new Name_Expr_Ast(*lhs_name);
+-			Ast * r = rhs->get_ast();
+-			ast = new Assignment_Stmt_Ast(l, r);
+-			//ast->print_ast(4,cout, true);
+-		}
+-        	//ast->print_spaces_on_new_line (4, cout);
+-
+-		attr = new Node_Attribute(ast);	
++		Ast * l = new Name_Expr_Ast(*lhs_name);
++		Ast * r = rhs;
++		ast = new Assignment_Stmt_Ast(l, r);
++		//ast->print_ast(4,cout, true);
+ 	}
+-
+-	return attr;
++        //ast->print_spaces_on_new_line (4, cout);
++	return ast;	
+ }
+ 
+-Node_Attribute * process_Stmt_List(Node_Attribute * na_list, Node_Attribute * na_ast)
++list<Ast *> * process_Stmt_List(list<Ast *> *ast_list, Ast *ast)
+ {
+-	Node_Attribute * attr; 
+-
+-	if (lp_mode() == compiler)
+-	{
+-		Ast * ast = na_ast->get_ast();
+-		if (show_ast())
+-			ast->print_ast(4, cout, true);
++	if (show_ast())
++		ast->print_ast(4, cout, true);
+ 
+-		list <Ast*> *ast_list = na_list->get_ast_list();
+-		ast_list->push_back(ast);	
+-	
+-		attr = new Node_Attribute(ast_list);
+-	}
+-	else 
+-		attr = new Node_Attribute();
+-
+-	return attr;
++	assert (ast_list != NULL);
++	ast_list->push_back(ast);
++	return ast_list;	
+ }
+ 
+-Node_Attribute * init_Stmt_List(Node_Attribute * na_ast)
++list<Ast *> * init_Stmt_List(Ast *ast)
+ {
+-	Node_Attribute * attr; 
+-
+-	if (lp_mode() == compiler)
+-	{
+-		Ast * ast = na_ast->get_ast();
+-		if (show_ast())
+-			ast->print_ast(4, cout, true);
++	if (show_ast())
++		ast->print_ast(4, cout, true);
+ 	
+-		list <Ast*> *ast_list = new list <Ast*>;
+-		ast_list->push_back(ast);	
+-		
+-		attr = new Node_Attribute(ast_list);
+-	}
+-	else 
+-		attr = new Node_Attribute();
+-
+-	return attr;
++	list <Ast*> *ast_list = new list <Ast*>;
++	assert (ast_list != NULL);
++	ast_list->push_back(ast);
++	return ast_list;	
+ }
+ 
+ ////////////////////////// BEGIN AND ENDING ///////////////////////////////////////
++#if 0
+ void process_finish(Node_Attribute * attr)
+-{ 	if ((lp_mode() == compiler) && (show_ast()))
++{}
++	
++  if ((lp_mode() == compiler) && (show_ast()))
+ 	{
+ 	// Now printing has been moved to per statement.
+ 	// Hence this part has been commened out.
+@@ -211,6 +122,4 @@ void process_finish(Node_Attribute * attr)
+ 
+ #endif 
+ 	}
+-}
+-
+-
++#endif

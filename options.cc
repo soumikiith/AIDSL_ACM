@@ -3,7 +3,6 @@
 struct Options chosen_options;
 
 struct argp_option options[] = {
-		{ "interpret", 'i', 0, 0, "Interpret the input and print result"},
 		{ "compile", 'c', 0, 0, "Compile the input into abstract syntax trees"},
   		{ "sa-scan", 'n' , 0, 0, "Stop after lexical analysis"},
   		{ "sa-parse", 'e' , 0, 0, "Stop after parsing"},
@@ -18,21 +17,7 @@ int parse_opt (int key, char *arg, struct argp_state *state)
 {
 	switch (key)
 	{
-		case 'i': 
-			if (chosen_options.compile)
-			{
-				cerr << "coi: Compilation and interpretation are mutually exclusive" << endl;
-				exit(1);
-			}
-			chosen_options.interpret = true;
-			mode = interpreter;
-			break;
 		case 'c': 
-			if (chosen_options.interpret)
-			{
-				cerr << "coi: Compilation and interpretation are mutually exclusive" << endl;
-				exit(1);
-			}
 			chosen_options.compile = true;
 			mode = compiler;
 			break;
@@ -75,14 +60,6 @@ bool show_parse()
 
 bool show_ast()
 {
-	if (chosen_options.show_ast)
-	{
-		if (chosen_options.interpret)
-		{
-			cerr << "coi: The show AST option is incompatible with the interpret option" << endl;
-			exit(1);
-		}
-	}
 	return chosen_options.show_ast;
 }
 
@@ -98,13 +75,7 @@ bool stop_after_parsing()
 
 lpmode lp_mode()
 {
-	if (chosen_options.interpret)
-	{
-		return interpreter;
-	}
-	if (chosen_options.compile)
-		return compiler;
-	assert ("Unknown option which is neither interpretation nor compilation");
+	return compiler;	
 }
 
 bool semantic_analysis()

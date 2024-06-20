@@ -5,192 +5,103 @@ map <string, int> memory; // Stores values of variables during interpretation
 
 //////////////////////// PROCESSING REDUCTIONS /////////////////////////////////
 
-Node_Attribute * process_NUM(string * name)
+Ast * process_NUM(string * name)
 {
-	Node_Attribute * na;
-
 	int num;
 
-	try    {
-		num = stoi(*name);
-		} 
-		catch (const std::out_of_range& ex) 
-		{
-        		std::cerr << "Number too large: " << name << ex.what() << std::endl;
-			exit(1);
-		}
+	try
+	{
+	  num = stoi(*name);
+	} 
+	catch (const std::out_of_range& ex)
+	{
+	  std::cerr << "Number too large: " << name << ex.what() << std::endl;
+	  exit(1);
+	}
 
 	Ast * ast = new Number_Expr_Ast<int>(num);
-
-	if (lp_mode() == interpreter)
-		na = new Node_Attribute(num);
-	else if (lp_mode() == compiler)
-		na = new Node_Attribute(ast);
-	return na;
+	assert (ast != NULL);
+	return ast;	
 }
 
-Node_Attribute * process_ID(string * name)
+Ast * process_ID(string * name)
 {
-	Node_Attribute * na;
-
 	Ast * ast = new Name_Expr_Ast(*name);
-
-	if (lp_mode() == interpreter)
-		na = new Node_Attribute(memory[*name]);
-	else if (lp_mode() == compiler)
-		na = new Node_Attribute(ast);
-	return na;
+	assert (ast != NULL);
+	return ast;	
 }
 
-Node_Attribute * process_Expr(Node_Attribute *left, op_type op, Node_Attribute *right)
+Ast * process_Expr(Ast *left, op_type op, Ast *right)
 {
-	Node_Attribute * na;
 	int result;
+	Ast * ast;
 
-	if (lp_mode() == interpreter)
+	switch (op)
 	{
-		switch (op)
-		{
-			case PLUS: 	result = left->get_value() + right->get_value(); break;
-			case MINUS:	result = left->get_value() - right->get_value(); break;
-			case MULT:	result = left->get_value() * right->get_value(); break;
-			case DIV:	
-					{	int divisor = right->get_value(); 
-						if (divisor != 0)
-							result = left->get_value() / divisor; 
-						else
-						{
-							cerr << "Divisor cannot be zero" << endl;
-							exit(1);
-						}
-						break;
-					}
-			case UMINUS:
-				if (right != NULL)
-				{
-					cerr << "Right operand must be NULL for Unary Minus" << endl;
-					exit(1);
-				}
-				else	result =  - left->get_value();
-				break;
-			default:
-				cerr << "Wrong operator type" << endl;
+		case PLUS:	ast = new Plus_Expr_Ast(left, right); break;
+		case MINUS:	ast = new Minus_Expr_Ast(left, right); break;
+		case MULT:	ast = new Mult_Expr_Ast(left, right); break;
+		case DIV:	ast = new Div_Expr_Ast(left, right); break;
+		case UMINUS:
+			if (right != NULL)
+			{
 				exit(1);
-				break;
-		}
-		na = new Node_Attribute(result);
+			}
+			else	ast = new UMinus_Expr_Ast(left);
+			break;
+		default:
+			cerr << "Wrong operator type" << endl;
+			exit(1);
+			break;
 	}
-	else if (lp_mode() == compiler)
-	{
-		Ast * ast;
-
-		switch (op)
-		{
-			case PLUS: 	ast = new Plus_Expr_Ast(left->get_ast(), right->get_ast()); break;
-			case MINUS:	ast = new Minus_Expr_Ast(left->get_ast(), right->get_ast()); break;
-			case MULT:	ast = new Mult_Expr_Ast(left->get_ast(), right->get_ast()); break;
-			case DIV:	ast = new Div_Expr_Ast(left->get_ast(), right->get_ast()); break;
-			case UMINUS:
-				if (right != NULL)
-				{
-					exit(1);
-				}
-				else	ast = new UMinus_Expr_Ast(left->get_ast());
-				break;
-			default:
-				cerr << "Wrong operator type" << endl;
-				exit(1);
-				break;
-		}
-
-		// Generating the current node's Node_Attribute using the above elements
-		na = new Node_Attribute(ast);
-	}
-	return na;
+	return ast; 
 }
 
-Node_Attribute * process_Asgn(string *lhs_name, Node_Attribute *rhs)
+Ast * process_Asgn(string *lhs_name, Ast *rhs)
 {
 	Ast *ast;
-	Node_Attribute *attr;
-
-	if (lp_mode() == interpreter)
+	if (lhs_name == NULL)
 	{
-		if (lhs_name == NULL)
-		   	cout << "> " << rhs->get_value() << endl;
-		else
-		{
-			memory[*lhs_name] = rhs->get_value();
-			cout << "> " << *lhs_name << " = " << rhs->get_value() << endl;
-		}
-		attr = new Node_Attribute();
+		ast = rhs;
 	}
-	else if (lp_mode() == compiler)
+	else
 	{
-		if (lhs_name == NULL)
-		{
-			ast = rhs->get_ast();
-		}
-		else
-		{
-			Ast * l = new Name_Expr_Ast(*lhs_name);
-			Ast * r = rhs->get_ast();
-			ast = new Assignment_Stmt_Ast(l, r);
-			//ast->print_ast(4,cout, true);
-		}
-        	//ast->print_spaces_on_new_line (4, cout);
-
-		attr = new Node_Attribute(ast);	
+		Ast * l = new Name_Expr_Ast(*lhs_name);
+		Ast * r = rhs;
+		ast = new Assignment_Stmt_Ast(l, r);
+		//ast->print_ast(4,cout, true);
 	}
-
-	return attr;
+        //ast->print_spaces_on_new_line (4, cout);
+	return ast;	
 }
 
-Node_Attribute * process_Stmt_List(Node_Attribute * na_list, Node_Attribute * na_ast)
+list<Ast *> * process_Stmt_List(list<Ast *> *ast_list, Ast *ast)
 {
-	Node_Attribute * attr; 
+	if (show_ast())
+		ast->print_ast(4, cout, true);
 
-	if (lp_mode() == compiler)
-	{
-		Ast * ast = na_ast->get_ast();
-		if (show_ast())
-			ast->print_ast(4, cout, true);
-
-		list <Ast*> *ast_list = na_list->get_ast_list();
-		ast_list->push_back(ast);	
-	
-		attr = new Node_Attribute(ast_list);
-	}
-	else 
-		attr = new Node_Attribute();
-
-	return attr;
+	assert (ast_list != NULL);
+	ast_list->push_back(ast);
+	return ast_list;	
 }
 
-Node_Attribute * init_Stmt_List(Node_Attribute * na_ast)
+list<Ast *> * init_Stmt_List(Ast *ast)
 {
-	Node_Attribute * attr; 
-
-	if (lp_mode() == compiler)
-	{
-		Ast * ast = na_ast->get_ast();
-		if (show_ast())
-			ast->print_ast(4, cout, true);
+	if (show_ast())
+		ast->print_ast(4, cout, true);
 	
-		list <Ast*> *ast_list = new list <Ast*>;
-		ast_list->push_back(ast);	
-		
-		attr = new Node_Attribute(ast_list);
-	}
-	else 
-		attr = new Node_Attribute();
-
-	return attr;
+	list <Ast*> *ast_list = new list <Ast*>;
+	assert (ast_list != NULL);
+	ast_list->push_back(ast);
+	return ast_list;	
 }
 
 ////////////////////////// BEGIN AND ENDING ///////////////////////////////////////
+#if 0
 void process_finish(Node_Attribute * attr)
-{ 	if ((lp_mode() == compiler) && (show_ast()))
+{}
+	
+  if ((lp_mode() == compiler) && (show_ast()))
 	{
 	// Now printing has been moved to per statement.
 	// Hence this part has been commened out.
@@ -211,6 +122,4 @@ void process_finish(Node_Attribute * attr)
 
 #endif 
 	}
-}
-
-
+#endif
