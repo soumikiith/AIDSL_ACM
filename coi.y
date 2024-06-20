@@ -4,6 +4,7 @@
 extern "C" void yyerror(char *s);
 extern int yylex(void);
 
+void display_stmt_list (list<Ast *> *);
 
 %}
 %union{
@@ -23,7 +24,7 @@ extern int yylex(void);
 %start Start
 %%
 Start: StmtList 			{	if (show_parse()) cout << "Reducing by `Start: StmtList'\n";
-						//if (semantic_analysis()) process_finish($1); 
+						if (show_ast ()) display_stmt_list ($1);
 					}
 	;
 StmtList : StmtList Stmt		{ 
@@ -75,3 +76,14 @@ Expr : Expr '+' Expr			{
 	;
 	
 %%
+
+void display_stmt_list (list<Ast *> *ast_stmt_list)
+{
+	if (!ast_stmt_list)
+		return;
+	for (auto ast: *ast_stmt_list)
+	{
+		ast->print_ast (4, cout, true);
+		cout << "\n";
+	}
+}

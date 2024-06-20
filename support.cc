@@ -69,17 +69,12 @@ Ast * process_Asgn(string *lhs_name, Ast *rhs)
 		Ast * l = new Name_Expr_Ast(*lhs_name);
 		Ast * r = rhs;
 		ast = new Assignment_Stmt_Ast(l, r);
-		//ast->print_ast(4,cout, true);
 	}
-        //ast->print_spaces_on_new_line (4, cout);
 	return ast;	
 }
 
 list<Ast *> * process_Stmt_List(list<Ast *> *ast_list, Ast *ast)
 {
-	if (show_ast())
-		ast->print_ast(4, cout, true);
-
 	assert (ast_list != NULL);
 	ast_list->push_back(ast);
 	return ast_list;	
@@ -87,39 +82,8 @@ list<Ast *> * process_Stmt_List(list<Ast *> *ast_list, Ast *ast)
 
 list<Ast *> * init_Stmt_List(Ast *ast)
 {
-	if (show_ast())
-		ast->print_ast(4, cout, true);
-	
 	list <Ast*> *ast_list = new list <Ast*>;
 	assert (ast_list != NULL);
 	ast_list->push_back(ast);
 	return ast_list;	
 }
-
-////////////////////////// BEGIN AND ENDING ///////////////////////////////////////
-#if 0
-void process_finish(Node_Attribute * attr)
-{}
-	
-  if ((lp_mode() == compiler) && (show_ast()))
-	{
-	// Now printing has been moved to per statement.
-	// Hence this part has been commened out.
-	// You can write any other ast list traversal here
-	// for some other task, such as generating a dot
-	// file to see the tree using graphviz or
-	// generating the C++ code as the output of the
-	// reference implementation
-
-#if 0
-		list <Ast*> * ast_list = attr->get_ast_list();
-
-		for (auto it : *ast_list)
-		{
-			it->print_ast(4, cout, true);
-			cout << endl;
-		}
-
-#endif 
-	}
-#endif
