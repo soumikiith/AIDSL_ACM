@@ -18,6 +18,7 @@ struct Options {
 	bool show_ast=false;
 	bool show_parse=false;
 	bool show_tokens=false;
+	bool show_symtab=false;
 	bool sa_scan=false;
 	bool sa_parse=false;
 };

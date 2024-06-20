@@ -9,6 +9,7 @@ struct argp_option options[] = {
   		{ "show-tokens", 't' , 0, 0, "Show the tokens on stdout"},
   		{ "show-ast", 'a' , 0, 0, "Show the abstract syntax trees on stdout"},
   		{ "show-parse", 'p' , 0, 0, "Show the abstract syntax trees on stdout"},
+		{ "show-symtab", 's', 0, 0, "Show the symbol table on stdout"},
 		{ 0 }
 		};
 
@@ -29,6 +30,9 @@ int parse_opt (int key, char *arg, struct argp_state *state)
 			break;
 		case 'p':
 			chosen_options.show_parse = true;
+			break;
+		case 's':
+			chosen_options.show_symtab = true;
 			break;
 		case 'e':
 			chosen_options.sa_parse = true;
@@ -61,6 +65,11 @@ bool show_parse()
 bool show_ast()
 {
 	return chosen_options.show_ast;
+}
+
+bool show_symtab()
+{
+	return chosen_options.show_symtab;
 }
 
 bool stop_after_scanning()
