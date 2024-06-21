@@ -14,6 +14,7 @@ void display_stmt_list (list<Ast *> *);
 }
 %token <name> NUM 
 %token <name> ID
+%token <name> TOKEN_DTYPE
 
 %left '+' '-'
 %left '*' '/'
@@ -39,7 +40,10 @@ StmtList : StmtList Stmt		{
 Stmt : ID '=' Expr ';' 			{ 
 						if (show_parse()) cout << "Reducing by `Stmt : ID = Expr ;'\n";
 						if (semantic_analysis()) $$ = process_Asgn($1, $3); 
-					} 
+					}
+	| TOKEN_DTYPE ID ';'		{
+						if(show_parse()) cout << "Reducing by `Stmt : TOKEN_DTYPE ID ;'\n";
+					}
 	;
 Expr : Expr '+' Expr			{ 
 						if (show_parse()) cout << "Reducing by `Expr : Expr + Expr'\n";

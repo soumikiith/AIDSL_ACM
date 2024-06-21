@@ -26,13 +26,15 @@ punct [();]
 			store_token_name("PUNCTUATION", yytext, yylineno);
 			return yytext[0]; 
 		}
-
+int32|int16|int8|float16|float32 {
+			store_token_name("TOKEN_DTYPE", yytext, yylineno);
+			return TOKEN_DTYPE;
+				}
 {letter}({letter}|{digit})* { 
 				
 			store_token_name("ID\t", yytext, yylineno);
 			yylval.name= new string(yytext); return ID; 
-		}
-		
+		}		
 {ws}		;
 .		{
 			cerr << "Illegal Character \"" << yytext[0] << "\". Ignoring the rest of the input. " << endl;
