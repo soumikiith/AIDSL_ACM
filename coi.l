@@ -26,10 +26,17 @@ punct [();]
 			store_token_name("PUNCTUATION", yytext, yylineno);
 			return yytext[0]; 
 		}
-int32|int16|int8|float16|float32 {
-			store_token_name("TOKEN_DTYPE", yytext, yylineno);
-			return TOKEN_DTYPE;
-				}
+
+int32		{
+			store_token_name ("TK_INT32", yytext, yylineno);
+			return TK_INT32;
+		}
+
+int8		{
+			store_token_name ("TK_INT8", yytext, yylineno);
+			return TK_INT8;
+		}
+
 {letter}({letter}|{digit})* { 
 				
 			store_token_name("ID\t", yytext, yylineno);

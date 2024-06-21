@@ -14,7 +14,8 @@ void display_stmt_list (list<Ast *> *);
 }
 %token <name> NUM 
 %token <name> ID
-%token <name> TOKEN_DTYPE
+%token TK_INT8
+%token TK_INT32
 
 %left '+' '-'
 %left '*' '/'
@@ -41,8 +42,8 @@ Stmt : ID '=' Expr ';' 			{
 						if (show_parse()) cout << "Reducing by `Stmt : ID = Expr ;'\n";
 						if (semantic_analysis()) $$ = process_Asgn($1, $3); 
 					}
-	| TOKEN_DTYPE ID ';'		{
-						if(show_parse()) cout << "Reducing by `Stmt : TOKEN_DTYPE ID ;'\n";
+	| Decl_Stmt ';'			{
+						$$ = new Empty_Ast(); 
 					}
 	;
 Expr : Expr '+' Expr			{ 
@@ -78,6 +79,13 @@ Expr : Expr '+' Expr			{
 						if (semantic_analysis()) $$ = $2; 
 					}
 	;
+
+Decl_Stmt: Scalar_Decl_Stmt
+
+Scalar_Decl_Stmt: Base_Type ID
+
+Base_Type: TK_INT32
+	 | TK_INT8
 	
 %%
 

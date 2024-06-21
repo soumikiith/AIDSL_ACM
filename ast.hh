@@ -53,6 +53,12 @@ public:
 	void print_spaces (int sc, ostream & file_buffer);
 };
 
+class Empty_Ast: public Ast
+{
+public:
+	virtual void print_ast(int space_count, ostream & file_buffer, bool top_level) {}
+};
+
 class Expression_Ast: public Ast
 {
 };
