@@ -80,7 +80,9 @@ Expr : Expr '+' Expr			{
 					}
 	;
 
-Decl_Stmt: Scalar_Decl_Stmt
+Decl_Stmt: Scalar_Decl_Stmt | Tensor_Decl_Stmt
+
+Tensor_Decl_Stmt : ID'('NUM','Base_Type')''['NUM']'| ID'('NUM','Base_Type')''['NUM']''['NUM']'
 
 Scalar_Decl_Stmt: Base_Type ID
 

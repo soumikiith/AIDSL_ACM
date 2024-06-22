@@ -87,3 +87,43 @@ list<Ast *> * init_Stmt_List(Ast *ast)
 	ast_list->push_back(ast);
 	return ast_list;	
 }
+
+//Defining functions of Type_Info class
+Type_Info::Type_Info(var_type bt)
+{
+	this->base_type = bt;
+}
+Type_Info::Type_Info(var_type bt, int nd, int fs, int ss)
+{
+	this->base_type = bt;
+	this->dim_count = nd;
+	this->first_dim_size = fs;
+	this->second_dim_size = ss;
+}
+string Type_Info::base_type_name()
+{
+	if(this->base_type == INT32)
+	{
+		return "INT32";
+	}
+	else if (this->base_type == FLOAT32)
+	{
+		return "FLOAT32";
+	}
+}
+var_type Type_Info::get_base_type()
+{
+	return this->base_type;
+}
+int Type_Info::get_number_of_dimensions()
+{
+	return this->dim_count;
+}
+int Type_Info::get_size_of_first_dim()
+{
+	return this->first_dim_size;
+}
+int Type_Info::get_size_of_second_dim()
+{
+	return this->second_dim_size;
+}

@@ -11,7 +11,7 @@ digit  [0-9]
 ws	[ \t\n]*
 operator [-+*/=]
 letter [a-zA-Z_]
-punct [();]
+punct [();,\[\]]
 %%
 {digit}+ 	{ 	
 			store_token_name("NUM\t", yytext, yylineno);
