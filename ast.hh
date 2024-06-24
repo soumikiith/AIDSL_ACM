@@ -22,11 +22,12 @@
 #ifndef AST_HH
 #define AST_HH
 
-#include<string>
-#include<iostream>
-#include<iomanip>
-#include<typeinfo>
-#include<list>
+#include <string>
+#include <iostream>
+#include <iomanip>
+#include <typeinfo>
+#include <list>
+#include "type-info.hh"
 
 #define AST_INDENT 4
 #define INDENT_INCR 2
@@ -51,6 +52,11 @@ public:
 
 	void print_spaces_on_new_line (int sc, ostream & file_buffer);
 	void print_spaces (int sc, ostream & file_buffer);
+
+	Type_Info *get_type_info () { return type_info; }
+	void set_type_info (Type_Info *t) { type_info = t; }
+private:
+	Type_Info *type_info;
 };
 
 class Empty_Ast: public Ast
@@ -114,7 +120,7 @@ class Name_Expr_Ast: public Base_Expr_Ast
 
 	string expr_name;
 public:
-	Name_Expr_Ast(string & name);
+	Name_Expr_Ast(string & name, Type_Info *type_info);
 	~Name_Expr_Ast();
 
 	void print_ast(int space_count, ostream & file_buffer, bool top_level);

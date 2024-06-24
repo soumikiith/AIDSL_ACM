@@ -9,7 +9,9 @@ using namespace std;
 #include "ast.hh"
 
 Ast::Ast()
-{}
+{
+	type_info = NULL;
+}
 
 Ast::~Ast()
 {}
@@ -155,6 +157,9 @@ template <class DATA_TYPE>
 Number_Expr_Ast<DATA_TYPE>::Number_Expr_Ast(DATA_TYPE number)
 {
 	constant = number;
+	Type_Info *type_info = new Type_Info(INT32);
+	assert (type_info);
+	set_type_info (type_info);
 }
 
 template <class DATA_TYPE>
@@ -328,9 +333,10 @@ void Ast::print_spaces (int sc, ostream & file_buffer)
 
 /////////////////////////////////////////////////////////////////
 
-Name_Expr_Ast::Name_Expr_Ast(string & name)
+Name_Expr_Ast::Name_Expr_Ast(string & name, Type_Info *type_info)
 {
 	expr_name = name;
+	set_type_info (type_info);
 }
 
 Name_Expr_Ast::~Name_Expr_Ast()
