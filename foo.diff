@@ -1,0 +1,1590 @@
+diff --git a/Makefile b/Makefile
+index e008979..eefd1f3 100644
+--- a/Makefile
++++ b/Makefile
+@@ -7,7 +7,7 @@ TGT = coi
+ SCAN = $(TGT).l
+ PARSE = $(TGT).y
+ 
+-OBJ = scan.o parse.tab.o main.o support.o ast.o options.o type-check.o
++OBJ = scan.o parse.tab.o main.o support.o ast.o options.o type-check.o codegen.o
+ 
+ CFLAGS = -g -fpermissive
+ 
+diff --git a/api.h b/api.h
+new file mode 100644
+index 0000000..07b4482
+--- /dev/null
++++ b/api.h
+@@ -0,0 +1,870 @@
++// C++ Program to implement
++// template Array class
++#include <iostream>
++using namespace std;
++
++template <typename T> class Tensor {
++private:
++    T* ptr;
++    int dim;
++    int row;
++    int col;
++
++public:
++    int getDim()
++    {
++        return dim;
++    }
++    int getRow()
++    {
++        return row;
++    }
++    int getCol()
++    {
++        return col;
++    }
++
++    Tensor(int dim, int row, int col=1); //Parameterized Constructor
++    Tensor(); //Default Constructor
++    void output(); //Print tensor to stdout
++    void assign(Tensor<T> t0);
++    void set(int d, int r, int c); //set a tensor to a given dimension
++    void assign(T t0);
++    Tensor<T> trans(); //Transpose of a tensor
++    Tensor<T> scalar_mul(T var); //scalar multiplication for tensors
++    Tensor<T> scalar_div(T var); //scalar division for tensors
++    Tensor<T> scalar_add(T var); //scalar addition for tensors
++    Tensor<T> scalar_sub(T var); //scalar subtraction for tensors
++    bool equals(Tensor<T> t0); //Check if two tensors are equal
++    bool lt(Tensor<T> t0); //Check if one tensor is less than the other
++    bool gt(Tensor<T> t0); //Check if one tensor is greater than the other
++    bool leq(Tensor<T> t0); //Check if one tensor is less than or equal to the other
++    bool geq(Tensor<T> t0); //Check if one tensor is greater than or equal to the other
++    Tensor<T> add(Tensor<T> t0); //Add two tensors
++    Tensor<T> sub(Tensor<T> t0); //Subtract two tensors
++    Tensor<T> mul(Tensor<T> t0); //Multiply two tensors
++    Tensor<T> div(Tensor<T> t0); //Divide two tensors
++    Tensor<T> mm(Tensor<T> t0); //Matrix multiplication for two tensors
++    Tensor<T> conv(Tensor<T> t0); //Matrix multiplication for two tensors
++    T* operator[](size_t index) //Overload [] operator
++    
++    {
++        return (ptr+index*col);
++    }
++    const T* operator[] (size_t index) const //Overload [] operator
++    {
++        return (ptr+index*col);
++    }
++    
++    void operator=(Tensor<T> t0)//Assignment operator overload
++    {
++        this->assign(t0);
++    }
++    void operator=(T t0)//Assignment operator overload
++    {
++        this->assign(t0);
++    }
++    void input(); //Input tensor from stdin
++    // Tensor<T> pre_incre();
++    // Tensor<T> post_incre();
++    // Tensor<T> pre_decre();
++    // Tensor<T> post_decre();
++    Tensor<T> negate();
++};
++
++// template <typename T> Tensor<T> Tensor<T>::pre_incre()
++// {
++//     Tensor<T> result(this->dim, this->row, this->col);
++//     if(dim==1)
++//     {
++//         for (int i = 0; i < row; i++)
++//         {
++//             ptr[i]++;
++//             result.ptr[i] = ptr[i];
++//         }
++//     }
++//     else if(dim==2)
++//     {
++//         for (int i = 0; i < row; i++)
++//         {
++//             for(int j = 0; j<col; j++)
++//             {
++//                 *(ptr + i*col + j) = *(ptr + i*col + j) + 1;
++//                 *(result.ptr + i*col + j) = *(ptr + i*col + j);
++//             }
++//         }
++//     }
++//     return result;
++// }
++
++// template <typename T> Tensor<T> Tensor<T>::post_incre()
++// {
++//     Tensor<T> result(this->dim, this->row, this->col);
++
++//     if(dim==1)
++//     {
++//         for (int i = 0; i < row; i++)
++//         {
++//             result.ptr[i] = this->ptr[i];
++//             ptr[i]++;
++//         }
++//     }
++//     else if(dim==2)
++//     {
++//         for (int i = 0; i < row; i++)
++//         {
++//             for(int j = 0; j < col; j++)
++//             {
++//                 *(result.ptr + i*col + j) = *(ptr + i*col + j);
++//                 *(ptr + i*col + j) = *(ptr + i*col + j) + 1;
++//             }
++//         }
++//     }
++//     return result;
++// }
++
++// template <typename T> Tensor<T> Tensor<T>::pre_decre()
++// {
++//     Tensor<T> result(this->dim, this->row, this->col);
++//     if(dim==1)
++//     {
++//         for (int i = 0; i < row; i++)
++//         {
++//             ptr[i]--;
++//             result.ptr[i] = ptr[i];
++//         }
++//     }
++//     else if(dim==2)
++//     {
++//         for (int i = 0; i < row; i++)
++//         {
++//             for(int j = 0; j<col; j++)
++//             {
++//                 *(ptr + i*col + j) = *(ptr + i*col + j) - 1;
++//                 *(result.ptr + i*col + j) = *(ptr + i*col + j);
++//             }
++//         }
++//     }
++//     return result;
++// }
++
++// template <typename T> Tensor<T> Tensor<T>::post_decre()
++// {
++//     Tensor<T> result(this->dim, this->row, this->col);
++//     if(dim==1)
++//     {
++//         for (int i = 0; i < row; i++)
++//         {
++//             result.ptr[i] = ptr[i];
++//             ptr[i]--;
++//         }
++//     }
++//     else if(dim==2)
++//     {
++//         for (int i = 0; i < row; i++)
++//         {
++//             for(int j = 0; j<col; j++)
++//             {
++//                 *(result.ptr + i*col + j) = *(ptr + i*col + j);
++//                 *(ptr + i*col + j) = *(ptr + i*col + j) - 1;
++//             }
++//         }
++//     }
++//     return result;
++// }
++
++template <typename T> Tensor<T> Tensor<T>::negate()
++{
++    Tensor<T> result(this->dim, this->row, this->col);
++    if(dim==1)
++    {
++        for (int i = 0; i < row; i++)
++        {
++            result.ptr[i] = -ptr[i];
++        }
++    }
++    else if(dim==2)
++    {
++        for (int i = 0; i < row; i++)
++        {
++            for(int j = 0; j<col; j++)
++            {
++                result[i*col+j] = -ptr[i*col+j];
++            }
++        }
++    }
++    return result;
++}
++
++template <typename T> void Tensor<T>::input()
++{
++    if(dim==1)
++    {
++        for (int i = 0; i < row; i++)
++        {
++	    cout <<"Give input element for index: "<<i<<"\n";
++            cin >> ptr[i];
++        }
++    }
++    else if(dim==2)
++    {
++        for (int i = 0; i < row; i++)
++        {
++            for(int j = 0; j < col; j++)
++            {
++		cout <<"Give input element for index: "<<i<<", "<<j<<"\n";
++                cin >> ptr[i*col+j];
++            }
++        }
++    }
++}
++//Default Constructor
++template <typename T> Tensor<T>::Tensor()
++{
++    ptr = NULL;
++    dim = 0;
++    row = 0;
++    col = 0;
++}
++
++//Parameterized Constructor
++template <typename T> Tensor<T>::Tensor(int d, int r, int c)
++{
++    if(d==1)
++    {
++        ptr = (T*)malloc(r * sizeof(T));
++        row = r;
++        dim = d;
++        col = 1;
++    }
++    else if(d==2)
++    {
++        ptr = (T*)malloc(r * c * sizeof(T));
++        dim = d;
++        row = r;
++        col = c;
++    }
++    else
++    {
++        cout << "ERROR-while-allocation: Invalid dimension \n Only 2D and 1D are allowed. Have you given any other dimension ?" << endl;
++        exit(1);
++    }
++}
++
++//Set a tensor to a given dimension
++template <typename T> void Tensor<T>::set(int d, int r, int c)
++{
++    if(d==1)
++    {
++        ptr = (T*)malloc(r * sizeof(T));
++        row = r;
++        dim = d;
++        col = 1;
++    }
++    else if(d==2)
++    {
++        ptr = (T*)malloc(r * c * sizeof(T));
++        dim=d;
++        row = r;
++        col = c;
++    }
++    else
++    {
++        cout << "ERROR-setter: Invalid dimension" << endl;
++        exit(1);
++    }
++}
++
++//Output a tensor
++template <typename T> void Tensor<T>::output()
++{
++    if(dim==1)
++    {
++        for (int i = 0; i < row; i++)
++            cout << " " << ptr[i];
++        cout << endl;
++    }
++    else if(dim==2)
++    {
++        for (int i = 0; i < row; i++)
++        {
++            for(int j = 0; j < col; j++)
++                cout << " " << ptr[i*col + j];
++            cout << endl;
++        }
++        cout << endl;
++    }
++}
++
++//Less Than Operator
++template <typename T> bool Tensor<T>::lt(Tensor<T> t0)
++{
++    int size_t1, size_t2;
++    if(this->dim == 1)
++    {
++        size_t1 = this->row;
++    }
++    else if(this->dim == 2)
++    {
++        size_t1 = this->row * this->col;
++    }
++    if(t0.dim == 1)
++    {
++        size_t2 = t0.row;
++    }
++    else if(t0.dim == 2)
++    {
++        size_t2 = t0.row * t0.col;
++    }
++    if(size_t1 < size_t2)
++    {
++        return true;
++    }
++    return false;
++}
++
++//Greater Than Operator
++template <typename T> bool Tensor<T>::gt(Tensor<T> t0)
++{
++    int size_t1, size_t2;
++    if(this->dim == 1)
++    {
++        size_t1 = this->row;
++    }
++    else if(this->dim == 2)
++    {
++        size_t1 = this->row * this->col;
++    }
++    if(t0.dim == 1)
++    {
++        size_t2 = t0.row;
++    }
++    else if(t0.dim == 2)
++    {
++        size_t2 = t0.row * t0.col;
++    }
++    if(size_t1 > size_t2)
++    {
++        return true;
++    }
++    return false;
++}
++
++//Less Than or Equal Operator
++template <typename T> bool Tensor<T>::leq(Tensor<T> t0)
++{
++    int size_t1, size_t2;
++    if(this->dim == 1)
++    {
++        size_t1 = this->row;
++    }
++    else if(this->dim == 2)
++    {
++        size_t1 = this->row * this->col;
++    }
++    if(t0.dim == 1)
++    {
++        size_t2 = t0.row;
++    }
++    else if(t0.dim == 2)
++    {
++        size_t2 = t0.row * t0.col;
++    }
++    if(size_t1 <= size_t2)
++    {
++        return true;
++    }
++    return false;
++}
++
++//Greater Than or Equal Operator
++template <typename T> bool Tensor<T>::geq(Tensor<T> t0)
++{
++    int size_t1, size_t2;
++    if(this->dim == 1)
++    {
++        size_t1 = this->row;
++    }
++    else if(this->dim == 2)
++    {
++        size_t1 = this->row * this->col;
++    }
++    if(t0.dim == 1)
++    {
++        size_t2 = t0.row;
++    }
++    else if(t0.dim == 2)
++    {
++        size_t2 = t0.row * t0.col;
++    }
++    if(size_t1 >= size_t2)
++    {
++        return true;
++    }
++    return false;
++}
++
++//Addition Operator
++template <typename T> Tensor<T> Tensor<T>::add(Tensor<T> t0)
++{
++    Tensor<T> result = Tensor<T>(this->dim, this->row, this->col);
++    if(this->dim != t0.dim)
++    {
++        cout << "ERROR-element-wise-addition: Dimension mismatch" << endl;
++        exit(1);
++    }
++    if(dim==1)
++    {
++        if(this->row != t0.row)
++        {
++            cout << "ERROR-element-wise-addition: Row mismatch" << endl;
++            exit(1);
++        }
++        for (int i = 0; i < row; i++)
++        {
++            result.ptr[i] = this->ptr[i] + t0.ptr[i];
++        }
++    }
++    else if(dim==2)
++    {
++        if(this->row != t0.row)
++        {
++            cout << "ERROR-element-wise-addition: Row mismatch" << endl;
++            exit(1);
++        }
++        if(this->col != t0.col)
++        {
++            cout << "ERROR-element-wise-addition: Column mismatch" << endl;
++            exit(1);
++        }
++        for (int i = 0; i < row; i++)
++        {
++            for(int j = 0; j<col; j++)
++                result.ptr[i*col+j] = this->ptr[i*col+j] + t0.ptr[i*col+j];
++        }
++    }
++    return result;
++}
++
++//Subtraction Operator
++template <typename T> Tensor<T> Tensor<T>::sub(Tensor<T> t0)
++{
++    Tensor<T> result = Tensor<T>(this->dim, this->row, this->col);
++    if(this->dim != t0.dim)
++    {
++        cout << "ERROR-element-wise-subtraction: Dimension mismatch" << endl;
++        exit(1);
++    }
++    if(dim==1)
++    {
++        if(this->row != t0.row)
++        {
++            cout << "ERROR-element-wise-subtraction: Row mismatch" << endl;
++            exit(1);
++        }
++        for (int i = 0; i < row; i++)
++        {
++            result.ptr[i] = this->ptr[i] - t0.ptr[i];
++        }
++    }
++    else if(dim==2)
++    {
++        if(this->row != t0.row)
++        {
++            cout << "ERROR-element-wise-subtraction: Row mismatch" << endl;
++            exit(1);
++        }
++        if(this->col != t0.col)
++        {
++            cout << "ERROR-element-wise-subtraction: Column mismatch" << endl;
++            exit(1);
++        }
++        for (int i = 0; i < row; i++)
++        {
++            for(int j = 0; j<col; j++)
++                result.ptr[i*col+j] = this->ptr[i*col+j] - t0.ptr[i*col+j];
++        }
++    }
++    return result;
++}
++
++//Multiplication Operator
++template <typename T> Tensor<T> Tensor<T>::mul(Tensor<T> t0)
++{
++    Tensor<T> result = Tensor<T>(this->dim, this->row, this->col);
++    if(this->dim != t0.dim)
++    {
++        cout << "ERROR-element-wise-multiplication: Dimension mismatch" << endl;
++        exit(1);
++    }
++    if(dim==1)
++    {
++        if(this->row != t0.row)
++        {
++            cout << "ERROR-element-wise-multiplication: Row mismatch" << endl;
++            exit(1);
++        }
++        for (int i = 0; i < row; i++)
++        {
++            result.ptr[i] = this->ptr[i] * t0.ptr[i];
++        }
++    }
++    else if(dim==2)
++    {
++        if(this->row != t0.row)
++        {
++            cout << "ERROR-element-wise-multiplication: Row mismatch" << endl;
++            exit(1);
++        }
++        if(this->col != t0.col)
++        {
++            cout << "ERROR-element-wise-multiplication: Column mismatch" << endl;
++            exit(1);
++        }
++        for (int i = 0; i < row; i++)
++        {
++            for(int j = 0; j<col; j++)
++                result.ptr[i*col+j] = this->ptr[i*col+j] * t0.ptr[i*col+j];
++        }
++    }
++    return result;
++}
++
++//Division Operator
++template <typename T> Tensor<T> Tensor<T>::div(Tensor<T> t0)
++{
++    Tensor<T> result = Tensor<T>(this->dim, this->row, this->col);
++    if(this->dim != t0.dim)
++    {
++        cout << "ERROR: Dimension mismatch" << endl;
++        exit(1);
++    }
++    if(dim==1)
++    {
++        if(this->row != t0.row)
++        {
++            cout << "ERROR: Row mismatch" << endl;
++            exit(1);
++        }
++        for (int i = 0; i < row; i++)
++        {
++            if(t0.ptr[i]==0)
++            {
++                cout << "ERROR: Division by zero" << endl;
++                exit(1);
++            }
++            result.ptr[i] = this->ptr[i] / t0.ptr[i];
++        }
++    }
++    else if(dim==2)
++    {
++        if(this->row != t0.row)
++        {
++            cout << "ERROR: Row mismatch" << endl;
++            exit(1);
++        }
++        if(this->col != t0.col)
++        {
++            cout << "ERROR: Column mismatch" << endl;
++            exit(1);
++        }
++        for (int i = 0; i < row; i++)
++        {
++            for(int j = 0; j<col; j++)
++            {
++                if(t0.ptr[i*col+j]==0)
++                {
++                    cout << "ERROR: Division by zero" << endl;
++                    exit(1);
++                }
++                result.ptr[i*col+j] = this->ptr[i*col+j] / t0.ptr[i*col+j];
++            }
++        }
++    }
++    return result;
++}
++
++template <typename T> void Tensor<T>::assign(Tensor<T> t0)
++{
++    if(this->dim != t0.dim)
++    {
++        cout << "ERROR while assigning: Dimension mismatch" << endl;
++        exit(1);
++    }
++    if(dim==1)
++    {
++        if(this->row != t0.row)
++        {
++            cout << "ERROR while assigning: Row mismatch" << endl;
++            exit(1);
++        }
++        for (int i = 0; i < row; i++)
++        {
++            this->ptr[i] = t0.ptr[i];
++        }
++    }
++    else if(dim==2)
++    {
++        if(this->row != t0.row)
++        {
++            cout << "ERROR while assigning: Row mismatch" << endl;
++            exit(1);
++        }
++        if(this->col != t0.col)
++        {
++            cout << "ERROR while assigning: Column mismatch" << endl;
++            exit(1);
++        }
++        for (int i = 0; i < row; i++)
++        {
++            for(int j = 0; j<col; j++)
++                this->ptr[i*col+j] = t0.ptr[i*col+j];
++        }
++    }
++}
++
++template <typename T> void Tensor<T>::assign(T t0)
++{
++    for(int i = 0; i<row; i++)
++    {
++        for(int j = 0; j<col; j++)
++        {
++            this->ptr[i*col+j] = t0;
++        }
++    }
++}
++
++template <typename T> Tensor<T> Tensor<T>::conv(Tensor<T> t0)
++{
++    //implement 2D-Convolution
++    Tensor<T> result(this->dim, this->row, this->col);
++    int mid_row = t0.row/2;
++    int mid_col = t0.col/2;
++    for (int i = 0; i < this->row; i++)
++    {
++        for (int j = 0; j < this->col; j++)
++        {
++            for (int k = 0; k < t0.row; k++)
++            {
++                for (int l = 0; l < t0.col; l++)
++                {
++                    int row_x = i+k-mid_row;
++                    int row_y = j+l-mid_col;
++                    if(row_x>=0 && row_x<this->row && row_y>=0 && row_y<this->col)
++                    {
++                        *(result.ptr+i*col+j) += *(ptr + row_x*col + row_y) * *(t0.ptr+k*t0.col+l);
++                    }
++                }
++            }
++        }
++    }
++    return result;
++}
++
++template <typename T> bool Tensor<T>::equals(Tensor<T> t0)
++{
++    if(this->dim != t0.dim)
++    {
++        return false;
++    }
++    if(dim==1)
++    {
++        if(this->row != t0.row)
++        {
++            return false;
++        }
++        for (int i = 0; i < row; i++)
++        {
++            if(this->ptr[i] != t0.ptr[i])
++            {
++                return false;
++            }
++        }
++    }
++    else if(dim==2){
++        if(this->row != t0.row)
++        {
++            return false;
++        }
++        if(this->col != t0.col)
++        {
++            return false;
++        }
++        for (int i = 0; i < row; i++)
++        {
++            for(int j = 0; j<col; j++)
++            {
++                if(this->ptr[i*col+j] != t0.ptr[i*col+j])
++                {
++                    return false;
++                }
++            }
++        }
++    }
++    return true;
++}
++
++template <typename T> Tensor<T> Tensor<T>::scalar_add(T var)
++{
++    if(dim==1)
++    {
++    	Tensor<T> result(this->dim, this->row, 1);
++        for (int i = 0; i < row; i++)
++        {
++            result.ptr[i] = this->ptr[i] + var;
++        }
++        return result;
++    }
++    else if(dim==2)
++    {
++    	Tensor<T> result(this->dim, this->row, this->col);
++        for (int i = 0; i < row; i++)
++        {
++            for (int j = 0; j < col; j++)
++            {
++                *(result.ptr+i*col+j) =  *(ptr+i*col+j) + var;
++            }
++        }
++        return result;
++    }
++}
++template <typename T> Tensor<T> Tensor<T>::scalar_sub(T var)
++{
++    if(dim==1)
++    {
++    	Tensor<T> result(this->dim, this->row, 1);
++        for (int i = 0; i < row; i++)
++        {
++            result.ptr[i] = this->ptr[i] - var;
++        }
++        return result;
++    }
++    else if(dim==2)
++    {
++    	Tensor<T> result(this->dim, this->row, this->col);
++        for (int i = 0; i < row; i++)
++        {
++            for (int j = 0; j < col; j++)
++            {
++                *(result.ptr+i*col+j) =  *(ptr+i*col+j) - var;
++            }
++        }
++        return result;
++    }
++}
++
++template <typename T> Tensor<T> Tensor<T>::scalar_div(T var)
++{
++    if(var==0)
++    {
++        cout << "ERROR: Division by zero" << endl;
++        exit(1);
++    }
++    if(dim==1)
++    {
++    	Tensor<T> result(this->dim, this->row, 1);
++        for (int i = 0; i < row; i++)
++        {
++            result.ptr[i] = this->ptr[i] / var;
++        }
++        return result;
++    }
++    else if(dim==2)
++    {
++	Tensor<T> result(this->dim, this->row, this->col);
++        for (int i = 0; i < row; i++)
++        {
++            for (int j = 0; j < col; j++)
++            {
++                *(result.ptr+i*col+j) =  *(ptr+i*col+j) / var;
++            }
++        }
++        return result;
++    }
++}
++
++template <typename T> Tensor<T> Tensor<T>::scalar_mul(T var)
++{
++    if(dim==1)
++    {
++    	Tensor<T> result(this->dim, this->row, 1);
++        for (int i = 0; i < row; i++)
++        {
++            result.ptr[i] = this->ptr[i] * var;
++        }
++        return result;
++    }
++    else if(dim==2)
++    {
++    	Tensor<T> result(this->dim, this->row, this->col);
++        for (int i = 0; i < row; i++)
++        {
++            for (int j = 0; j < col; j++)
++            {
++                *(result.ptr+i*col+j) =  *(ptr+i*col+j) * var;
++            }
++        }
++        return result;
++    }
++}
++
++template <typename T> Tensor<T> Tensor<T>::mm(Tensor<T> t0)
++{
++    if(this->dim != 2 || t0.dim != 2)
++    {
++        cout << "ERROR: Dimension must be two: Matrix multiplication not possible" << endl;
++        exit(1);
++    }
++    //implement matrix multiplication
++    Tensor<T> result(this->dim, this->row, t0.col);
++    if(this->col != t0.row)
++    {
++        cout << "ERROR: Matrix multiplication not possible" << endl;
++        exit(1);
++    }
++    for (int i = 0; i < this->row; i++)
++    {
++        for (int j = 0; j < t0.col; j++)
++        {
++            for (int k = 0; k < this->col; k++)
++            {
++                *(result.ptr+i*t0.col+j) += *(ptr+i*col+k) * *(t0.ptr+k*t0.col+j);
++            }
++        }
++    }
++    return result;
++}
++
++template <typename T> Tensor<T> Tensor<T>::trans()
++{
++    if(this->dim == 1)
++    {
++        Tensor<T> result(2, this->row, this->row);
++
++        for (int i = 0; i < this->row; i++)
++        {
++            for(int j = 0; j < this->row; j++)
++            {
++                *(result.ptr+i*row+j) = 0;
++            }
++        }
++        for(int i = 0; i < this->row; i++)
++        {
++            *(result.ptr+i*row) = *(ptr+i);
++        }
++        return result;
++    }
++    else if(this->dim == 2)
++    {
++        Tensor<T> result(this->dim, this->col, this->row);
++        for (int i = 0; i < this->row; i++)
++        {
++            for (int j = 0; j < this->col; j++)
++            {
++                *(result.ptr+j*row+i) = *(ptr+i*col+j);
++            }
++        }
++        return result;
++    }
++    
++}
+diff --git a/ast.cc b/ast.cc
+index e014272..2757c14 100644
+--- a/ast.cc
++++ b/ast.cc
+@@ -38,6 +38,19 @@ void Unary_Expr_Ast::set_opd(Ast *o)
+ 	opd = o;
+ }
+ 
++void Output_Expr_Ast::gencode(ofstream& genf)
++{
++	Ast *opd = get_opd();
++	assert (opd);
++	Type_Info *type_info = opd->get_type_info ();
++	assert (type_info);
++
++	if (!type_info->is_tensor_type())
++	{
++		genf << "cout << ";
++		opd->gencode(genf);
++	}
++}
+ 
+ ////////////////////////////////////////////////////////////////
+ 
+@@ -86,7 +99,6 @@ Statement_Ast::Statement_Ast()
+ Statement_Ast::~Statement_Ast()
+ {}
+ 
+-
+ Assignment_Stmt_Ast::Assignment_Stmt_Ast(Ast * l, Ast * r)
+ {
+ 	assert (l !=NULL && "The LHS of an assignment cannot be NULL");
+@@ -151,6 +163,19 @@ void Assignment_Stmt_Ast::set_rhs(Ast *r)
+ 	rhs = r;
+ }
+ 
++void Assignment_Stmt_Ast::gencode(ofstream& genf)
++{
++	Ast *left = get_lhs();
++	assert (left);
++	left->gencode(genf);
++
++	genf << " = ";
++
++	Ast *right = get_rhs();
++	assert (right);
++	right->gencode(genf);
++}
++
+ ///////////////////////////////////////////////////////////////////////////////
+ 
+ template <class DATA_TYPE>
+@@ -177,17 +202,22 @@ void Number_Expr_Ast<DATA_TYPE>::print_ast(int sc, ostream & file_buffer, bool t
+ 	file_buffer << "Num : " << constant;
+ }
+ 
+-
++template <class DATA_TYPE>
++void Number_Expr_Ast<DATA_TYPE>::gencode(ofstream& genf)
++{
++	genf << constant;
++}
+ ///////////////////////////////////////////////////////////////////////////////
+ 
+ 
+-Plus_Expr_Ast::Plus_Expr_Ast(Ast * l, Ast * r)
++Plus_Expr_Ast::Plus_Expr_Ast(Ast * l, Ast * r, Type_Info *type_info)
+ {
+ 	assert (l !=NULL && "The left child of a PLUS AST cannot be NULL");
+ 	assert (r !=NULL && "The right child of a PLUS AST cannot be NULL");
+ 
+ 	set_left_child(l);
+ 	set_right_child(r);
++	set_type_info(type_info);
+ }
+ 
+ void Plus_Expr_Ast::print_ast(int sc, ostream & file_buffer, bool top_level)
+@@ -208,13 +238,14 @@ void Plus_Expr_Ast::print_ast(int sc, ostream & file_buffer, bool top_level)
+ 
+ /////////////////////////////////////////////////////////////////
+ 
+-Minus_Expr_Ast::Minus_Expr_Ast(Ast * l, Ast * r)
++Minus_Expr_Ast::Minus_Expr_Ast(Ast * l, Ast * r, Type_Info *type_info)
+ {
+ 	assert (l !=NULL && "The left child of a MINUS AST cannot be NULL");
+ 	assert (r !=NULL && "The right child of a MINUS AST cannot be NULL");
+ 
+ 	set_left_child(l);
+ 	set_right_child(r);
++	set_type_info(type_info);
+ }
+ 
+ void Minus_Expr_Ast::print_ast(int sc, ostream & file_buffer, bool top_level)
+@@ -235,13 +266,14 @@ void Minus_Expr_Ast::print_ast(int sc, ostream & file_buffer, bool top_level)
+ 
+ //////////////////////////////////////////////////////////////////
+ 
+-Mult_Expr_Ast::Mult_Expr_Ast(Ast * l, Ast * r)
++Mult_Expr_Ast::Mult_Expr_Ast(Ast * l, Ast * r, Type_Info *type_info)
+ {
+ 	assert (l !=NULL && "The left child of a MULT AST cannot be NULL");
+ 	assert (r !=NULL && "The right child of a MULT AST cannot be NULL");
+ 
+ 	set_left_child(l);
+ 	set_right_child(r);
++	set_type_info(type_info);
+ }
+ 
+ void Mult_Expr_Ast::print_ast(int sc, ostream & file_buffer, bool top_level)
+@@ -260,15 +292,42 @@ void Mult_Expr_Ast::print_ast(int sc, ostream & file_buffer, bool top_level)
+ 	file_buffer << ")";
+ }
+ 
++
++MatMul_Expr_Ast::MatMul_Expr_Ast(Ast * l, Ast * r, Type_Info *type_info)
++{	
++	assert (l);
++	assert (r);
++	set_left_child(l);
++	set_right_child(r);
++	set_type_info(type_info);
++}
++
++void MatMul_Expr_Ast::print_ast(int sc, ostream & file_buffer, bool top_level)
++{
++        print_spaces_on_new_line (sc, file_buffer);
++	file_buffer << "Arith: MatMul";
++
++        print_spaces_on_new_line (sc+INDENT_INCR, file_buffer);
++	file_buffer << "L_Opd (";
++	get_left_child()->print_ast(sc+2*INDENT_INCR, file_buffer, false);
++	file_buffer << ")";
++
++        print_spaces_on_new_line (sc+INDENT_INCR, file_buffer);
++	file_buffer << "R_Opd (";
++	get_right_child()->print_ast(sc+2*INDENT_INCR, file_buffer, false);
++	file_buffer << ")";
++}
++
+ ////////////////////////////////////////////////////////////////////
+ 
+-Div_Expr_Ast::Div_Expr_Ast(Ast * l, Ast * r)
++Div_Expr_Ast::Div_Expr_Ast(Ast * l, Ast * r, Type_Info *type_info)
+ {
+ 	assert (l !=NULL && "The left child of a DIV AST cannot be NULL");
+ 	assert (r !=NULL && "The right child of a DIV AST cannot be NULL");
+ 
+ 	set_left_child(l);
+ 	set_right_child(r);
++	set_type_info(type_info);
+ }
+ 
+ void Div_Expr_Ast::print_ast(int sc, ostream & file_buffer, bool top_level)
+@@ -352,6 +411,10 @@ void Name_Expr_Ast::print_ast(int sc, ostream & file_buffer, bool top_level)
+ 	file_buffer << "Name : " << expr_name;
+ }
+ 
++void Name_Expr_Ast::gencode(ofstream& genf)
++{
++	genf << mangle_name(expr_name);
++}
+ 
+ #if 0
+ int main()
+diff --git a/ast.hh b/ast.hh
+index e3a91aa..8515a90 100644
+--- a/ast.hh
++++ b/ast.hh
+@@ -9,11 +9,13 @@
+ 				- Number_Expr_Ast
+ 			- Unary_Expr_Ast
+ 				- UMinus_Expr_Ast
++				- Output_Expr_Ast
+ 			- Binary_Expr_Ast
+ 				- Plus_Expr_Ast
+ 				- Minus_Expr_Ast
+ 				- Div_Expr_Ast
+ 				- Mult_Expr_Ast
++				- Index_Expr_Ast
+ 		- Statement_Ast
+ 			- Assignment_Stmt_Ast
+ 
+@@ -27,6 +29,7 @@
+ #include <iomanip>
+ #include <typeinfo>
+ #include <list>
++#include <cassert>
+ #include "type-info.hh"
+ 
+ #define AST_INDENT 4
+@@ -49,6 +52,7 @@ public:
+ 	~Ast();
+ 
+ 	virtual void print_ast(int space_count, ostream & file_buffer, bool top_level) = 0;
++	virtual void gencode(ofstream &of) { assert(0); }
+ 
+ 	void print_spaces_on_new_line (int sc, ostream & file_buffer);
+ 	void print_spaces (int sc, ostream & file_buffer);
+@@ -63,6 +67,7 @@ class Empty_Ast: public Ast
+ {
+ public:
+ 	virtual void print_ast(int space_count, ostream & file_buffer, bool top_level) {}
++	virtual void gencode(ofstream &of) {}
+ };
+ 
+ class Expression_Ast: public Ast
+@@ -96,6 +101,16 @@ public:
+ 	
+ };
+ 
++class Output_Expr_Ast: public Unary_Expr_Ast
++{
++public:
++	Output_Expr_Ast (Ast *operand) { set_opd (operand); }
++	~Output_Expr_Ast() {}
++
++	void print_ast(int, ostream&, bool) {}
++	void gencode(ofstream&);
++};
++
+ class Base_Expr_Ast: public Expression_Ast
+ {
+ public:
+@@ -124,7 +139,7 @@ public:
+ 	~Name_Expr_Ast();
+ 
+ 	void print_ast(int space_count, ostream & file_buffer, bool top_level);
+-
++	virtual void gencode(ofstream&);
+ };
+ 
+ template <class T>
+@@ -137,7 +152,7 @@ public:
+ 	~Number_Expr_Ast();
+ 
+ 	void print_ast(int space_count, ostream & file_buffer, bool top_level);
+-
++	virtual void gencode(ofstream&);
+ };
+ 
+ 
+@@ -148,7 +163,7 @@ public:
+ class Plus_Expr_Ast: public Binary_Expr_Ast
+ {
+ public:
+-	Plus_Expr_Ast(Ast * l, Ast * r);
++	Plus_Expr_Ast(Ast * l, Ast * r, Type_Info *);
+ 	~Plus_Expr_Ast() {}
+ 
+ 	void print_ast(int space_count, ostream & file_buffer, bool top_level);
+@@ -158,7 +173,7 @@ public:
+ class Minus_Expr_Ast: public Binary_Expr_Ast
+ {
+ public:
+-	Minus_Expr_Ast(Ast * l, Ast * r);
++	Minus_Expr_Ast(Ast * l, Ast * r, Type_Info *);
+ 	~Minus_Expr_Ast() {}
+ 
+ 	void print_ast(int space_count, ostream & file_buffer, bool top_level);
+@@ -168,7 +183,7 @@ public:
+ class Div_Expr_Ast: public Binary_Expr_Ast
+ {
+ public:
+-	Div_Expr_Ast(Ast * l, Ast * r);
++	Div_Expr_Ast(Ast * l, Ast * r, Type_Info *);
+ 	~Div_Expr_Ast() {}
+ 
+ 	void print_ast(int space_count, ostream & file_buffer, bool top_level);
+@@ -178,13 +193,22 @@ public:
+ class Mult_Expr_Ast: public Binary_Expr_Ast
+ {
+ public:
+-	Mult_Expr_Ast(Ast * l, Ast * r);
++	Mult_Expr_Ast(Ast * l, Ast * r, Type_Info *);
+ 	~Mult_Expr_Ast() {}
+ 
+ 	void print_ast(int space_count, ostream & file_buffer, bool top_level);
+ 
+ };
+ 
++class MatMul_Expr_Ast: public Binary_Expr_Ast
++{
++public:
++	MatMul_Expr_Ast(Ast *l, Ast *r, Type_Info *);
++	~MatMul_Expr_Ast() {}
++
++	void print_ast(int, ostream&, bool);
++};
++
+ class UMinus_Expr_Ast: public Unary_Expr_Ast
+ {
+ public:
+@@ -211,6 +235,7 @@ public:
+ 	void set_rhs(Ast *r);
+ 
+ 	void print_ast(int space_count, ostream & file_buffer, bool top_level);
++	void gencode(ofstream&);
+ };
+ 
+ class Assignment_Stmt_Ast: public Statement_Ast
+@@ -227,7 +252,7 @@ public:
+ 	void set_rhs(Ast *r);
+ 
+ 	void print_ast(int space_count, ostream & file_buffer, bool top_level);
+-
++	void gencode(ofstream&); // ofstream
+ };
+ 
+ #endif
+diff --git a/codegen.cc b/codegen.cc
+new file mode 100644
+index 0000000..08f6ae9
+--- /dev/null
++++ b/codegen.cc
+@@ -0,0 +1,80 @@
++#include "ast.hh"
++#include "common-headers.hh"
++#include <string>
++#include <iostream>
++#include <fstream>
++
++// genf will contain the resulting C++ code-gen by writing to out.cpp
++static ofstream genf;
++
++/* If identifier name happnes to be a C++ keyword, we need to 
++   "mangle it", ie, suffix it so that it doesn't clash.
++   For eg if identifier in our langauge is for,
++   that would not be a valid C++ identifier since "for" is reserved keyword in C++.
++   So we suffix it with _1 and change the name to "for_1".  */
++string mangle_name(string name)
++{
++	return name + "_1";
++}
++
++static void
++gen_prologue()
++{
++	genf << "int main()\n{\n";
++}
++
++static void
++gen_epilogue()
++{
++	genf << "}\n";
++}
++
++static void
++gen_decl(string name, Type_Info *type_info)
++{
++	if (!type_info->is_tensor_type())
++	{
++		// Generate scalar declaration of following form:
++		// base_type<space>id_name<space>';'
++
++		switch (type_info->get_base_type())
++		{
++			case INT32: genf << "int"; break;
++			case INT8: genf << "char"; break;
++			default: assert (0);
++		}
++
++		genf << " ";
++		genf << mangle_name(name);
++		genf << ";\n";
++	}
++}
++
++static void
++gen_declarations()
++{
++	for (auto& pair: symtab)
++		gen_decl(pair.first, pair.second);
++}
++
++static void
++gen_stmts (list<Ast *> *ast_stmt_list)
++{
++	if (!ast_stmt_list)
++		return;
++	for (Ast *ast: *ast_stmt_list)
++	{
++		ast->gencode(genf);
++		if (!dynamic_cast<Empty_Ast *> (ast))
++			genf << ";\n";		
++	}
++}
++
++void code_gen(list<Ast *> *ast_stmt_list)
++{
++	genf.open("out.cpp");
++	gen_prologue();
++	gen_declarations();
++	gen_stmts (ast_stmt_list);	
++	gen_epilogue();
++}
+diff --git a/coi.l b/coi.l
+index 30302b2..e721eaf 100644
+--- a/coi.l
++++ b/coi.l
+@@ -12,6 +12,7 @@ ws	[ \t\n]*
+ operator [-+*/=]
+ letter [a-zA-Z_]
+ punct [();,\[\]]
++matmul \*\*
+ %%
+ {digit}+ 	{ 	
+ 			store_token_name("NUM\t", yytext, yylineno);
+@@ -22,6 +23,12 @@ punct [();,\[\]]
+ 			store_token_name("OPERATOR", yytext, yylineno);
+ 			return yytext[0]; 
+ 		}
++
++{matmul}	{
++			store_token_name("MATMUL", yytext, yylineno);
++			return TK_MATMUL;
++		}
++
+ {punct}		{	
+ 			store_token_name("PUNCTUATION", yytext, yylineno);
+ 			return yytext[0]; 
+@@ -37,6 +44,11 @@ int8		{
+ 			return TK_INT8;
+ 		}
+ 
++output		{
++			store_token_name ("TK_OUTPUT", yytext, yylineno);
++			return TK_OUTPUT;
++		}
++
+ {letter}({letter}|{digit})* { 
+ 				
+ 			store_token_name("ID\t", yytext, yylineno);
+diff --git a/coi.y b/coi.y
+index 11ce460..311902a 100644
+--- a/coi.y
++++ b/coi.y
+@@ -19,6 +19,8 @@ void display_symtab ();
+ %token <name> ID
+ %token TK_INT8
+ %token TK_INT32
++%token TK_MATMUL
++%token TK_OUTPUT
+ 
+ %left '+' '-'
+ %left '*' '/'
+@@ -32,6 +34,7 @@ void display_symtab ();
+ Start: StmtList 			{	if (show_parse()) cout << "Reducing by `Start: StmtList'\n";
+ 						if (show_ast ()) display_stmt_list ($1);
+ 						display_symtab ();
++						code_gen($1);
+ 					}
+ 	;
+ StmtList : StmtList Stmt		{ 
+@@ -55,6 +58,12 @@ Stmt : ID '=' Expr ';' 			{
+ 	| Decl_Stmt ';'			{
+ 						$$ = new Empty_Ast(); 
+ 					}
++
++	| TK_OUTPUT Expr ';'		{
++						Ast *ast = new Output_Expr_Ast ($2);
++						assert (ast);
++						$$ = ast;
++					}
+ 	;
+ Expr : Expr '+' Expr			{ 
+ 						if (show_parse()) cout << "Reducing by `Expr : Expr + Expr'\n";
+@@ -72,6 +81,11 @@ Expr : Expr '+' Expr			{
+ 						if (show_parse()) cout << "Reducing by `Expr : Expr - Expr'\n";
+ 						if (semantic_analysis()) $$ = process_Expr($1, MINUS, $3); 
+ 					}
++
++	| Expr TK_MATMUL Expr		{
++						if (show_parse()) cout << "Reducing by `Expr: Expr ** Expr'\n";
++						if (semantic_analysis()) $$ = process_Expr($1, MATMUL, $3);
++					}
+ 	| '-' Expr	%prec Uminus	{ 
+ 						if (show_parse()) cout << "Reducing by `Expr : - Expr'\n";
+ 						if (semantic_analysis()) $$ = process_Expr($2, UMINUS, NULL); 
+diff --git a/common-headers.hh b/common-headers.hh
+index b84462f..8786ef3 100644
+--- a/common-headers.hh
++++ b/common-headers.hh
+@@ -36,6 +36,7 @@ typedef enum {
+ 	MINUS,
+ 	MULT,
+ 	DIV,
++	MATMUL,
+ 	UMINUS,
+ 	COPY,
+ } op_type;
+@@ -62,5 +63,11 @@ bool semantic_analysis();
+ int checked_stoi (string);
+ 
+ void type_check_assign(string, Ast *);
++Type_Info *type_check_binary (Ast *, Ast *, string);
++Type_Info *type_check_mult (Ast *, Ast *);
++Type_Info *type_check_matmul (Ast *, Ast *);
++
++void code_gen(list<Ast *> *);
++string mangle_name(string);
+ 
+ #endif
+diff --git a/support.cc b/support.cc
+index 156fa75..4627108 100644
+--- a/support.cc
++++ b/support.cc
+@@ -49,13 +49,35 @@ Ast * process_Expr(Ast *left, op_type op, Ast *right)
+ {
+ 	int result;
+ 	Ast * ast;
++	Type_Info *type_info;
+ 
+ 	switch (op)
+ 	{
+-		case PLUS:	ast = new Plus_Expr_Ast(left, right); break;	
+-		case MINUS:	ast = new Minus_Expr_Ast(left, right); break;
+-		case MULT:	ast = new Mult_Expr_Ast(left, right); break;
+-		case DIV:	ast = new Div_Expr_Ast(left, right); break;
++		case PLUS:
++			type_info = type_check_binary(left, right, "plus");
++			ast = new Plus_Expr_Ast(left, right, type_info);
++			assert (ast);
++			break;
++		case MINUS:
++			type_info = type_check_binary(left, right, "minus");
++			ast = new Minus_Expr_Ast(left, right, type_info);
++			assert (ast);
++			break;
++		case MULT:
++			type_info = type_check_mult(left, right);
++			ast = new Mult_Expr_Ast(left, right, type_info);
++			assert (ast);
++			break;
++		case DIV:
++			type_info = type_check_binary(left, right, "div");
++			ast = new Div_Expr_Ast(left, right, type_info);
++			assert (ast);
++			break;
++		case MATMUL:
++			type_info = type_check_matmul(left, right);
++			ast = new MatMul_Expr_Ast(left, right, type_info);
++			assert (ast);
++			break;
+ 		case UMINUS:
+ 			if (right != NULL)
+ 			{
+diff --git a/type-check.cc b/type-check.cc
+index fac2bcd..540f96f 100644
+--- a/type-check.cc
++++ b/type-check.cc
+@@ -1,27 +1,133 @@
+ #include "common-headers.hh"
+ #include "ast.hh"
+ 
+-static bool types_same_p(Type_Info *type1, Type_Info *type2) {
+-    // Implement this function
+-    return false;
++static bool
++types_same_p (Type_Info *type1, Type_Info *type2)
++{
++	return (type1->get_base_type () == type2->get_base_type ()
++		&& type1->get_number_of_dimensions () == type2->get_number_of_dimensions ()
++		&& type1->get_size_of_first_dim () == type2->get_size_of_first_dim()
++		&& type2->get_size_of_second_dim () == type2->get_size_of_second_dim());
+ }
+ 
+-void type_check_assign(string name, Ast *rhs) {
++void type_check_assign (string name, Ast *rhs)
++{
++	
++	auto it = symtab.find (name);
++	if (it == symtab.end ())
++  	{
++		cerr << "Error: Variable " << name << " is undefined\n";
++		exit (1);
++	}
+ 
+-    auto it = symtab.find(name);
+-    if (it == symtab.end()) {
+-        cerr << "Error: Variable " << name << " is undefined\n";
+-        exit(1);
+-    }
++	Type_Info *id_type_info = it->second; 
++	assert (id_type_info);
+ 
+-    Type_Info *id_type_info = it->second;
+-    assert(id_type_info);
++	Type_Info *rhs_type_info = rhs->get_type_info ();
++	assert (rhs_type_info);
+ 
+-    Type_Info *rhs_type_info = rhs->get_type_info();
+-    assert(rhs_type_info);
++	if (!types_same_p (id_type_info, rhs_type_info)) 
++	{
++		cerr << "Error: Types do not match for assignment\n";
++		exit (1);
++	}
++}
++
++Type_Info *
++type_check_binary (Ast *left, Ast *right, string op_name)
++{
++	Type_Info *left_type = left->get_type_info();
++	assert (left_type);
++
++	Type_Info *right_type = right->get_type_info();
++	assert (right_type);
++
++	if (!types_same_p (left_type, right_type))
++	{
++		// TODO: Improve diagnostic
++		cerr << "Error: Types do not match for binary operator " << op_name << "\n";
++		exit (1);
++	}
++
++	return left_type;
++}
++
++Type_Info *
++type_check_mult (Ast *left, Ast *right)
++{
++	Type_Info *left_type = left->get_type_info();
++	assert (left_type);
++
++	Type_Info *right_type = right->get_type_info();
++	assert (right_type);
+ 
+-    if (!types_same_p(id_type_info, rhs_type_info)) {
+-        cerr << "Error: Types do not match for assignment\n";
+-        exit(1);
+-    }
++	// FIXME: Rewrite this to make it less verbose
++	if (types_same_p (left_type, right_type))
++		return left_type;
++	else if (left_type->is_tensor_type () && !right_type->is_tensor_type())
++	{
++		if (left_type->get_base_type() != right_type->get_base_type())
++		{
++			cerr << "Error: Tensor and scalar have different base type\n";
++			exit (1);
++		}
++		return left_type;
++	} 
++	else if (right_type->is_tensor_type () && !left_type->is_tensor_type())
++	{
++		if (right_type->get_base_type() != left_type->get_base_type())
++		{
++			cerr << "Error: Scalar and Tensor have different base type\n";
++			exit (1);
++		}
++		return right_type;
++	} 
++	else
++	{
++		cerr << "Error: Invalid operands to multiply operator\n";
++		exit (1);
++	}
+ }
++
++Type_Info *
++type_check_matmul(Ast *left, Ast *right)
++{
++	Type_Info *left_type_info = left->get_type_info();
++	assert (left_type_info);
++
++	Type_Info *right_type_info = right->get_type_info();
++	assert (right_type_info);
++
++	if (!left_type_info->is_tensor_type()
++	    || !right_type_info->is_tensor_type())
++	{
++		cerr << "Error: Operands for matmul should have tensor type\n";
++		exit (1);
++	}
++
++	if (left_type_info->get_number_of_dimensions() != 2
++	    || right_type_info->get_number_of_dimensions() != 2)
++	{
++		cerr << "Error: Tensor operands for matmul should have 2 dimensions\n";
++		exit (1);
++	}
++
++	if (left_type_info->get_base_type() != right_type_info->get_base_type())
++	{
++		cerr << "Error: Base type for tensor operands do not match\n";
++		exit (1);
++	}
++
++	if (left_type_info->get_size_of_second_dim() != right_type_info->get_size_of_first_dim())
++	{
++		cerr << "Error: Second dim of first tensor should match first dim of second tensor\n";
++		exit (1);
++	}
++
++	var_type base_type = left_type_info->get_base_type();
++	int fs = left_type_info->get_size_of_first_dim();
++	int ss = right_type_info->get_size_of_second_dim();
++	Type_Info *result_type_info = new Type_Info (base_type, 2, fs, ss);
++	assert (result_type_info);
++	return result_type_info;
++} 

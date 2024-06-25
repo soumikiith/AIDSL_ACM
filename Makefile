@@ -7,7 +7,7 @@ TGT = coi
 SCAN = $(TGT).l
 PARSE = $(TGT).y
 
-OBJ = scan.o parse.tab.o main.o support.o ast.o options.o type-check.o
+OBJ = scan.o parse.tab.o main.o support.o ast.o options.o type-check.o codegen.o
 
 CFLAGS = -g -fpermissive
 

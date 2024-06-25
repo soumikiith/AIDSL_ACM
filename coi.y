@@ -19,6 +19,8 @@ void display_symtab ();
 %token <name> ID
 %token TK_INT8
 %token TK_INT32
+%token TK_MATMUL
+%token TK_OUTPUT
 
 %left '+' '-'
 %left '*' '/'
@@ -32,6 +34,7 @@ void display_symtab ();
 Start: StmtList 			{	if (show_parse()) cout << "Reducing by `Start: StmtList'\n";
 						if (show_ast ()) display_stmt_list ($1);
 						display_symtab ();
+						code_gen($1);
 					}
 	;
 StmtList : StmtList Stmt		{ 
@@ -55,6 +58,12 @@ Stmt : ID '=' Expr ';' 			{
 	| Decl_Stmt ';'			{
 						$$ = new Empty_Ast(); 
 					}
+
+	| TK_OUTPUT Expr ';'		{
+						Ast *ast = new Output_Expr_Ast ($2);
+						assert (ast);
+						$$ = ast;
+					}
 	;
 Expr : Expr '+' Expr			{ 
 						if (show_parse()) cout << "Reducing by `Expr : Expr + Expr'\n";
@@ -71,6 +80,11 @@ Expr : Expr '+' Expr			{
 	| Expr '-' Expr 		{ 
 						if (show_parse()) cout << "Reducing by `Expr : Expr - Expr'\n";
 						if (semantic_analysis()) $$ = process_Expr($1, MINUS, $3); 
+					}
+
+	| Expr TK_MATMUL Expr		{
+						if (show_parse()) cout << "Reducing by `Expr: Expr ** Expr'\n";
+						if (semantic_analysis()) $$ = process_Expr($1, MATMUL, $3);
 					}
 	| '-' Expr	%prec Uminus	{ 
 						if (show_parse()) cout << "Reducing by `Expr : - Expr'\n";

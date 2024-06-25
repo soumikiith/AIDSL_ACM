@@ -12,6 +12,7 @@ ws	[ \t\n]*
 operator [-+*/=]
 letter [a-zA-Z_]
 punct [();,\[\]]
+matmul \*\*
 %%
 {digit}+ 	{ 	
 			store_token_name("NUM\t", yytext, yylineno);
@@ -22,6 +23,12 @@ punct [();,\[\]]
 			store_token_name("OPERATOR", yytext, yylineno);
 			return yytext[0]; 
 		}
+
+{matmul}	{
+			store_token_name("MATMUL", yytext, yylineno);
+			return TK_MATMUL;
+		}
+
 {punct}		{	
 			store_token_name("PUNCTUATION", yytext, yylineno);
 			return yytext[0]; 
@@ -35,6 +42,11 @@ int32		{
 int8		{
 			store_token_name ("TK_INT8", yytext, yylineno);
 			return TK_INT8;
+		}
+
+output		{
+			store_token_name ("TK_OUTPUT", yytext, yylineno);
+			return TK_OUTPUT;
 		}
 
 {letter}({letter}|{digit})* { 

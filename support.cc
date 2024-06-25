@@ -49,13 +49,35 @@ Ast * process_Expr(Ast *left, op_type op, Ast *right)
 {
 	int result;
 	Ast * ast;
+	Type_Info *type_info;
 
 	switch (op)
 	{
-		case PLUS:	ast = new Plus_Expr_Ast(left, right); break;	
-		case MINUS:	ast = new Minus_Expr_Ast(left, right); break;
-		case MULT:	ast = new Mult_Expr_Ast(left, right); break;
-		case DIV:	ast = new Div_Expr_Ast(left, right); break;
+		case PLUS:
+			type_info = type_check_binary(left, right, "plus");
+			ast = new Plus_Expr_Ast(left, right, type_info);
+			assert (ast);
+			break;
+		case MINUS:
+			type_info = type_check_binary(left, right, "minus");
+			ast = new Minus_Expr_Ast(left, right, type_info);
+			assert (ast);
+			break;
+		case MULT:
+			type_info = type_check_mult(left, right);
+			ast = new Mult_Expr_Ast(left, right, type_info);
+			assert (ast);
+			break;
+		case DIV:
+			type_info = type_check_binary(left, right, "div");
+			ast = new Div_Expr_Ast(left, right, type_info);
+			assert (ast);
+			break;
+		case MATMUL:
+			type_info = type_check_matmul(left, right);
+			ast = new MatMul_Expr_Ast(left, right, type_info);
+			assert (ast);
+			break;
 		case UMINUS:
 			if (right != NULL)
 			{

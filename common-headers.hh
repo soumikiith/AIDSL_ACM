@@ -36,6 +36,7 @@ typedef enum {
 	MINUS,
 	MULT,
 	DIV,
+	MATMUL,
 	UMINUS,
 	COPY,
 } op_type;
@@ -62,5 +63,11 @@ bool semantic_analysis();
 int checked_stoi (string);
 
 void type_check_assign(string, Ast *);
+Type_Info *type_check_binary (Ast *, Ast *, string);
+Type_Info *type_check_mult (Ast *, Ast *);
+Type_Info *type_check_matmul (Ast *, Ast *);
+
+void code_gen(list<Ast *> *);
+string mangle_name(string);
 
 #endif
